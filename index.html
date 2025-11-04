@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Vinyl Label Designer</title>
+
+  <!-- Google Fonts (inkl. ein paar schnörkelige) -->
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Lobster&family=Montserrat:wght@400;700&family=Pacifico&family=Poppins:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <header>
+    <div id="langBar">
+      <button data-lang="en">EN</button>
+      <button data-lang="de">DE</button>
+      <button data-lang="fr">FR</button>
+    </div>
+    <h1 id="title">Customize your vinyl label</h1>
+
+    <nav id="toolbar">
+      <button id="chooseBg" data-i18n="chooseBg">Choose background</button>
+      <button id="addStraight" data-i18n="addStraight">Add straight text</button>
+      <button id="addCurved" data-i18n="addCurved">Add curved text</button>
+      <button id="addShape" data-i18n="addShape">Add shape</button>
+      <button id="savePng" data-i18n="savePng">Save PNG (hi-res)</button>
+      <!-- nötig für die Bildauswahl: -->
+      <input id="bgFile" type="file" accept="image/*" hidden>
+    </nav>
+
+    <!-- Editor-Panels -->
+    <section id="panels">
+      <div id="editor" class="panel">
+        <label data-i18n="element">Element:
+          <select id="elementSelect"></select>
+        </label>
+
+        <!-- Text-Gruppe -->
+        <span class="group group-text">
+          <label data-i18n="content">Content:
+            <input id="textContent" type="text" placeholder="Type your text"/>
+          </label>
+          <label data-i18n="font">Font:
+            <select id="fontSelect">
+              <option>Arial</option><option>Helvetica</option><option>Times New Roman</option>
+              <option>Georgia</option><option>Courier New</option><option>Verdana</option>
+              <option>Montserrat</option><option>Poppins</option><option>Playfair Display</option>
+              <option>Lobster</option><option>Pacifico</option><option>Dancing Script</option>
+              <option>Great Vibes</option><option>Cinzel Decorative</option>
+            </select>
+          </label>
+          <label data-i18n="size">Size:
+            <input id="fontSize" type="number" min="8" max="200" value="32"/>
+          </label>
+          <label data-i18n="color">Color:
+            <input id="fontColor" type="color" value="#111111"/>
+          </label>
+
+          <!-- Curved-Extras -->
+          <span id="arcControls" style="display:none">
+            <label data-i18n="arcPos">Arc position (°):
+              <input id="arcPos" type="range" min="0" max="360" value="180"/>
+            </label>
+            <label data-i18n="arcRadius">Arc radius:
+              <input id="arcRadius" type="range" min="80" max="290" value="240"/>
+            </label>
+            <label data-i18n="arcSpacing">Letter spacing:
+              <input id="arcSpacing" type="range" min="-90" max="90" value="0"/>
+            </label>
+            <label data-i18n="arcFlip">Flip inward:
+              <input id="arcFlip" type="checkbox"/>
+            </label>
+          </span>
+
+          <button id="deleteItem" class="secondary" data-i18n="delete">Delete selected</button>
+        </span>
+
+        <!-- Shape-Gruppe -->
+        <span class="group group-shape">
+          <label data-i18n="type">Type:
+            <select id="shapeType" disabled>
+              <option value="rect">Rectangle</option>
+              <option value="square">Square</option>
+              <option value="circle">Circle</option>
+              <option value="oval">Oval</option>
+              <option value="triangle">Triangle</option>
+              <option value="star">Star</option>
+              <option value="heart">Heart</option>
+              <option value="line">Line</option>
+            </select>
+          </label>
+          <label>W:<input id="shapeW" type="number" min="5" max="1200" value="160"></label>
+          <label>H:<input id="shapeH" type="number" min="5" max="1200" value="80"></label>
+          <label data-i18n="rotation">Rotation:
+            <input id="shapeRot" type="range" min="-180" max="180" value="0"/>
+          </label>
+          <label data-i18n="stroke">Stroke:
+            <input id="shapeStroke" type="color" value="#111111"/>
+          </label>
+          <label data-i18n="strokeWidth">Width:
+            <input id="shapeStrokeW" type="number" min="0" max="40" value="3"/>
+          </label>
+          <label data-i18n="filled">Filled:
+            <input id="shapeFilled" type="checkbox"/>
+          </label>
+          <label data-i18n="fill">Fill:
+            <input id="shapeFill" type="color" value="#ffffff"/>
+          </label>
+          <button id="deleteShape" class="secondary" data-i18n="delete">Delete selected</button>
+        </span>
+      </div>
+
+      <!-- Rim-Line -->
+      <div id="rimPanel" class="panel">
+        <strong data-i18n="rimTitle">Rim line:</strong>
+        <label data-i18n="show">Show <input id="rimEnabled" type="checkbox" checked></label>
+        <label data-i18n="color">Color <input id="rimColor" type="color" value="#111111"></label>
+        <label data-i18n="width">Width <input id="rimWidth" type="number" min="1" max="20" value="2"></label>
+        <label data-i18n="pattern">Pattern
+          <select id="rimPattern">
+            <option value="solid">solid</option>
+            <option value="dashed">dashed</option>
+            <option value="dotted">dotted</option>
+          </select>
+        </label>
+      </div>
+    </section>
+  </header>
+
+  <main>
+    <div id="stageWrap">
+      <div id="trash" title="Drop here to delete">🗑</div>
+      <div id="label"><canvas id="canvas" width="600" height="600"></canvas></div>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
