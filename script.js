@@ -294,6 +294,7 @@ bgFile.addEventListener('change',()=>{
   const r=new FileReader();
   r.onload=e=>{
     const img=new Image();
+    img.crossOrigin = 'anonymous';
     img.onload=()=>{
       const sc=Math.max(C/img.width, C/img.height);
       bgImage=img; bg.w=img.width*sc; bg.h=img.height*sc; bg.x=(C-bg.w)/2; bg.y=(C-bg.h)/2;
@@ -420,10 +421,17 @@ savePngBtn.addEventListener('click',()=>{
 
   const a=document.createElement('a');
   a.download = 'vinyl-label-3000.png';
+  try {
   a.href = off.toDataURL('image/png');
+} catch (err) {
+  alert('Saving failed. Please reload and try again.');
+  console.error(err);
+  return;
+}
   a.click();
 });
 
 /* ===== Init ===== */
 render();
 refreshElementList();
+
