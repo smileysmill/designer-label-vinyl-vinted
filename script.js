@@ -287,38 +287,155 @@ canvas.addEventListener('pointermove',  onPointerMove);
 window .addEventListener('pointerup',    onPointerUp);
 window .addEventListener('pointercancel',onPointerUp);
 
-/* ===== Buttons ===== */
-chooseBgBtn.addEventListener('click',()=>bgFile.click());
-bgFile.addEventListener('change',()=>{
-  const f=bgFile.files && bgFile.files[0]; if(!f) return;
-  const r=new FileReader();
-  r.onload=e=>{
-    const img=new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload=()=>{
-      const sc=Math.max(C/img.width, C/img.height);
-      bgImage=img; bg.w=img.width*sc; bg.h=img.height*sc; bg.x=(C-bg.w)/2; bg.y=(C-bg.h)/2;
-      render();
-    }; img.src=e.target.result;
-  }; r.readAsDataURL(f);
-});
+savePngBtn.addEventListener('click', () => {
+  const OUT = 3000, s = OUT / C, CXo = OUT / 2, CYo = OUT / 2, Ro = OUT / 2;
+  const off = document.createElement('canvas');
+  off.width = OUT;
+  off.height = OUT;
+  const o = off.getContext('2d');
 
-addStraightBtn.addEventListener('click',()=>{
-  const it={type:'straight', text:"Type your text", x:CX, y:CY+20, size:32, color:"#111111", font:fontSelect.value||'Arial'};
-  items.push(it); selectItem(it);
-});
-addCurvedBtn.addEventListener('click',()=>{
-  const it={type:'arc', text:"Curved text", size:22, color:"#111111", font:fontSelect.value||'Arial', radius:240, posDeg:180, spacingDeg:0, flip:false};
-  items.push(it); selectItem(it);
-});
-addShapeBtn.addEventListener('click',()=>{
-  let kind=prompt("Shape? star, oval, circle, triangle, square, rect, heart, line","star");
-  if(!kind) return; kind=kind.toLowerCase().trim();
-  if(!["star","oval","circle","triangle","square","rect","heart","line"].includes(kind)) return;
-  const s={type:'shape', kind, x:CX, y:CY, w:160, h:80, rot:0, stroke:"#111111", strokeW:3, filled:false, fill:"#ffffff"};
-  if(kind==="square"||kind==="circle"){ s.w=140; s.h=140; }
-  if(kind==="line"){ s.w=180; s.h=4; s.filled=false; }
-  items.push(s); selectItem(s);
+  // Hintergrund
+  o.save();
+  o.beginPath();
+  o.arc(CXo, CYo, Ro, 0, Math.PI * 2);
+  o.clip();
+  if (bgImage)
+    o.drawImage(bgImage, bg.x * s, bg.y * s, bg.w * s, bg.h * s);
+  else {
+    o.fillStyle = "#fff";
+    o.fillRect(0, 0, OUT, OUT);
+  }
+  o.restore();
+
+  // Außenring
+  o.strokeStyle = "#333";
+  o.lineWidth = 2 * s;
+  o.beginPath();
+  o.arc(CXo, CYo, Ro - 1 * s, 0, Math.PI * 2);
+  o.stroke();
+
+  // Shapes
+  items.filter(i => i.type === 'shape').forEach(sv => {
+    o.save();
+    o.translate(sv.x * s, sv.y * s);
+    o.rotate((sv.rot || 0) * Math.PI / 180);
+    o.strokeStyle = sv.stroke;
+    o.lineWidth = sv.strokeW * s;
+    o.fillStyle = sv.fill;
+    if (sv.kind === 'rect') {
+      o.beginPath();
+      o.rect(-sv.w * s / 2, -sv.h * s / 2, sv.w * s, sv.h * s);
+      if (sv.filled) o.fill();
+      if (sv.strokeW > 0) o.stroke();
+    } else if (sv.kind === 'circle') {
+      o.beginPath();
+      o.arc(0, 0, Math.min(sv.w, sv.h) * s / 2, 0, Math.PI * 2);
+      if (sv.filled) o.fill();
+      if (sv.strokeW > 0) o.stroke();
+    } else if (sv.kind === 'oval') {
+      o.beginPath();
+      o.ellipse(0, 0, sv.w * s / 2, sv.h * s / 2, 0, 0, Math.PI * 2);
+      if (sv.filled) o.fill();
+      if (sv.strokeW > 0) o.stroke();
+    } else if (sv.kind === 'triangle') {
+      o.beginPath();
+      o.moveTo(-sv.w * s / 2, sv.h * s / 2);
+      o.lineTo(0, -sv.h * s / 2);
+      o.lineTo(sv.w * s / 2, sv.h * s / 2);
+      o.closePath();
+      if (sv.filled) o.fill();
+      if (sv.strokeW > 0) o.stroke();
+    } else if (sv.kind === 'line') {
+      o.beginPath();
+      o.moveTo(-sv.w * s / 2, 0);
+      o.lineTo(sv.w * s / 2, 0);
+      o.stroke();
+    } else if (sv.kind === 'heart') {
+      heartPath(o, sv.w * s, sv.h * s);
+      if (sv.filled) o.fill();
+      if (sv.strokeW > 0) o.stroke();
+    } else if (sv.kind === 'star') {
+      starPath(o, Math.min(sv.w, sv.h) * s / 2, 5, 0.5);
+      if (sv.filled) o.fill();
+      if (sv.strokeW > 0) o.stroke();
+    }
+    o.restore();
+  });
+
+  // Rim
+  if (rimEnabled.checked) {
+    const r = Ro - 18 * s, col = rimColor.value, lw = Number(rimWidth.value) * s, pat = rimPattern.value;
+    o.save();
+    o.strokeStyle = col;
+    o.lineWidth = lw;
+    if (pat === 'solid') {
+      o.setLineDash([]);
+      o.beginPath();
+      o.arc(CXo, CYo, r, 0, Math.PI * 2);
+      o.stroke();
+    } else if (pat === 'dashed') {
+      o.setLineDash([14 * s, 8 * s]);
+      o.beginPath();
+      o.arc(CXo, CYo, r, 0, Math.PI * 2);
+      o.stroke();
+    } else {
+      o.setLineDash([]);
+      const n = Math.round(2 * Math.PI * r / 16);
+      for (let i = 0; i < n; i++) {
+        const a = i / n * Math.PI * 2, x = CXo + r * Math.cos(a), y = CYo + r * Math.sin(a);
+        o.beginPath();
+        o.arc(x, y, Math.max(1, lw / 2), 0, Math.PI * 2);
+        o.fillStyle = col;
+        o.fill();
+      }
+    }
+    o.restore();
+  }
+
+  // Texte
+  items.filter(i => i.type !== 'shape').forEach(it => {
+    o.fillStyle = it.color;
+    o.font = `${it.size * s}px ${it.font}`;
+    o.textBaseline = "middle";
+    if (it.type === 'straight') {
+      o.textAlign = "center";
+      o.fillText(it.text, it.x * s, it.y * s);
+    } else {
+      const r = it.radius * s, pos = (it.posDeg || 0) * Math.PI / 180, flip = !!it.flip, spacing = (it.spacingDeg || 0) * Math.PI / 180;
+      const total = o.measureText(it.text).width, arcLen = total / r;
+      let a = pos - arcLen / 2 + spacing;
+      for (let i = 0; i < it.text.length; i++) {
+        const ch = it.text[i], w = o.measureText(ch).width, da = w / r;
+        const mid = a + da / 2, x = CXo + r * Math.cos(mid), y = CYo + r * Math.sin(mid);
+        o.save();
+        o.translate(x, y);
+        o.rotate(mid + (flip ? -Math.PI / 2 : Math.PI / 2));
+        o.textAlign = "center";
+        o.fillText(ch, 0, 0);
+        o.restore();
+        a += da;
+      }
+    }
+  });
+
+  // Loch in der Mitte
+  o.fillStyle = "#111";
+  o.beginPath();
+  o.arc(CXo, CYo, R_HOLE * s, 0, Math.PI * 2);
+  o.fill();
+
+  // PNG-Datei erstellen – funktioniert auch in Safari
+  off.toBlob(blob => {
+    if (!blob) {
+      alert("Saving failed. Please try again.");
+      return;
+    }
+    const link = document.createElement('a');
+    link.download = 'vinyl-label-3000.png';
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }, 'image/png');
 });
 
 /* ===== Änderungen aus den Panels ===== */
@@ -434,4 +551,5 @@ savePngBtn.addEventListener('click',()=>{
 /* ===== Init ===== */
 render();
 refreshElementList();
+
 
